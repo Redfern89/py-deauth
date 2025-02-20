@@ -24,8 +24,10 @@ key1_flag = False
 key2_flag = False
 key3_flag = False
 key4_flag = False
+key1_2_flage = False
 deauth_flag = False
 acks = 0
+packet_buff = []
 
 print(f"[+] Switching {args.interface} to channel {args.channel}")
 subprocess.run(["iwconfig", args.interface, "channel", str(args.channel)], capture_output=True, text=True)
@@ -48,6 +50,7 @@ def packet_handler(pkt):
 	global key3_flag
 	global key4_flag
 	global all_keys_flag
+	global packet_buff
 	global acks
 	
 	if pkt.haslayer(Dot11) and pkt.type == 1 and pkt.subtype == 13 and pkt[Dot11].addr1 == args.bssid:
@@ -55,7 +58,8 @@ def packet_handler(pkt):
 	
 	if pkt.haslayer(Dot11Elt) and pkt[Dot11].addr3 == args.bssid:
 		if not beacon_detect_flag:
-			wrpcap(args.pcap_file, pkt)
+			#wrpcap(args.pcap_file, pkt)
+			packet_buff.append(pkt)
 			ssid = pkt[Dot11Elt].info.decode(errors="ignore") if pkt.haslayer(Dot11Elt) else None
 			print(f"[+] Done, ssid=\"{ssid}\"")
 			print(f"[+] Waiting EAPOL frame from {args.bssid}")
@@ -81,26 +85,27 @@ def packet_handler(pkt):
 		if ack and not mic and not install and not secure:
 			if not key1_flag:
 				print("[+] Received KEY1")
-				wrpcap(args.pcap_file, pkt, append=True)
+				packet_buff.append(pkt)
 				key1_flag = True
 		elif mic and not ack and not install and not secure:
 			if not key2_flag:
 				print("[+] Received KEY2")
-				wrpcap(args.pcap_file, pkt, append=True)
+				packet_buff.append(pkt)
 				key2_flag = True
 		elif mic and ack and install and not secure:
 			if not key3_flag:
-				print("[+] Received KEY3")
-				wrpcap(args.pcap_file, pkt, append=True)
+				print("[+] Received KEY3, skipped")
+				#packet_buff.append(pkt)
 				key3_flag = True
 		elif mic and install and not secure:
 			if not key4_flag:
-				print("[+] Received KEY4")
-				wrpcap(args.pcap_file, pkt, append=True)
+				print("[+] Received KEY4, skipped")
+				#packet_buff.append(pkt)
 				key4_flag = True
 		else:
 			print("[!] Unknown EAPOL Message")
 	if key1_flag and key2_flag and key3_flag and key4_flag:
+		wrpcap(args.pcap_file, packet_buff)
 		print(f"[+] All data saved to {args.pcap_file}, thank you")
 		all_keys_flag = True
 		
