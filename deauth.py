@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 
+'''
+	Скрипт для деавторизации из захвата handshake. Использовать только на своей сети! 
+	Любые действия с чужими сетями - противозаконны! Помните это
+	
+	Author: Redfern89
+	git: https://github.com/Redfern89/py-deauth
+'''
+
 import time
 import threading
 import argparse
