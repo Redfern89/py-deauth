@@ -163,14 +163,14 @@ class WiFiDeauth:
 						print("[+] All keys received done")
 						
 						wrpcap(self.pcap_file, self.packets)
-						print(f"[+] All data saved in \"{self.pcap_file}\"")
+						print(f"[+] All {len(self.packets)} packets saved in \"{self.pcap_file}\"")
 						
 						if self.aircrack_check:
 							print("[+] Running aircrack-ng")
 							if self.aircrack_check_pass(self.pcap_file, self.password):
-								print(f"[+] Aircrack check: OK, password=\"{self.password}\"")
+								print(f"[+] Checking aircrack-ng: OK, password=\"{self.password}\"")
 							else:
-								print(f"[-] Aircrack check: FAIL, password \"{self.password}\" incorrect") 
+								print(f"[-] Checking aircrack-ng: FAIL, password \"{self.password}\" incorrect") 
 						
 						self.interrupt_flag = True
 				else:
