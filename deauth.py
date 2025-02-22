@@ -108,7 +108,7 @@ class WiFiDeauth:
 			if self.client != 'ff:ff:ff:ff:ff:ff':
 				print(f"[+] Send deauth to {self.BSSID} as {self.CLIENT} ({i +1} / {self.deauth_count})")
 			else:
-				print(f"[+] Send deauth to broadcast as {self.BSSID}")
+				print(f"[+] Send deauth to broadcast as {self.BSSID} ({i +1} / {self.deauth_count})")
 				
 			self.current_deauth = i
 			for pnt_num in range(self.deauth_packets):
