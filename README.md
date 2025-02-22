@@ -27,7 +27,7 @@ sudo python3 deauth.py -i <интерфейс> -c <канал> -b <BSSID> -s <MA
 | `-i`, `--interface` | Интерфейс для прослушивания | `wlan0mon` |
 | `-c`, `--channel` | Канал WiFi | `11` |
 | `-b`, `--bssid` | BSSID точки доступа | `04:5e:a4:6a:28:47` |
-| `-s`, `--client` | MAC-адрес клиента | `80:32:53:ae:f8:b2` |
+| `-s`, `--client` | MAC-адрес клиента (не обязательный параметр), если не задан, будет рассылка в broadcast | `80:32:53:ae:f8:b2` |
 | `-w`, `--pcap-file` | Файл для сохранения handshake | `handshake.pcap` |
 | `-d`, `--deauth-count` | Количество посылок деавторизации | 5 |
 | `-a`, `--aircrack-check` | Проверка пароля при помощи Aircrack-NG | - |
