@@ -178,7 +178,7 @@ class WiFiDeauth:
 					if not self.all_keys_flag:
 						self.all_keys_flag = True						
 						wrpcap(self.pcap_file, self.packets)
-						print(f"[+] All keys ({len(self.packets)}) received done. Created \"{self.pcap_file}\"")
+						print(f"[+] All keys ({len(self.packets)}) received. Created \"{self.pcap_file}\"")
 						
 						if self.aircrack_check:
 							print("[+] Running aircrack-ng")
