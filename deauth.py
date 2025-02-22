@@ -177,7 +177,7 @@ class WiFiDeauth:
 					if not self.keys_receiving_timeout_flag:
 						self.keys_receiving_timeout_flag = True
 						self.interrupt_flag = True
-						print("[-] Eapol keys receiving timeout!")
+						print("[-] EAPOL keys receiving timeout!")
 	
 	def start_sniffing(self):
 		sniff(iface=self.interface, prn=self.packet_handler, stop_filter=lambda pkt: (self.interrupt_flag))
