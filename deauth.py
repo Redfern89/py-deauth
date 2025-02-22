@@ -120,8 +120,7 @@ class WiFiDeauth:
 		if not self.beacon_detect_flag:
 			if pkt.haslayer(Dot11Elt) and pkt[Dot11].addr3 == self.bssid:
 				ssid = pkt[Dot11Elt].info.decode(errors="ignore") if pkt.haslayer(Dot11Elt) else None
-				print(f"[+] Done, ssid=\"{ssid}\"")
-				print(f"[+] Waiting EAPOL frame from {self.BSSID}")
+				print(f"[+] Done, ssid=\"{ssid}\", waiting EAPOL data")
 				self.beacon_detect_flag = True
 				self.packets.append(pkt)
 				threading.Thread(target=self.send_deauth).start()
